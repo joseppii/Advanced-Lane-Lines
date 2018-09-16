@@ -88,7 +88,7 @@ Using these two matrices, a warped and unwarped version of the thresholded image
 
 ## 3. Lane Detection
 
-Lane detection is implemented in section 3 of the IPython Notebook, using two distinct functions. When the algorithm is executed for the first time or the lane needs to be re-detected without taking into account any previous detections, `find_lane_pixels()` is used. This method takes a binary thresholded image as an input and returns the left and right lane pixel positions. The state of each line is stored using class `Line()`. The Line class is stored in `Line.py`. Two instansiations of this class are needed, one for the left and one for the right lane. Once we detect the pixels for each line, `fit_polynomial()` is used to fit a polynomial. Here is the result of `find_lane_pixels()` and `fit_polynomial()`:
+Lane detection is implemented in section 3 of the IPython Notebook, using two distinct functions. When the algorithm is executed for the first time or the lane needs to be re-detected without taking into account any previous detections, `find_lane_pixels()` is used. This method takes a binary thresholded image as an input and returns the left and right lane pixel positions. The state of each line is stored using class `Line()`. The Line class implementation can be found in `Line.py`. Two instansiations of this class are needed, one for the left and one for the right lane. Once we detect the pixels for each line, `fit_polynomial()` is used to fit a polynomial. Here is the result of `find_lane_pixels()` and `fit_polynomial()`:
 
 ![alt text][image6]
 
@@ -107,4 +107,4 @@ Overlaying the result is done using two functions. `overlay_img()` which draws t
 
 ## 4. Discussion
 
-The algorithm performed as expected on the project_video, but the results were not so good on the advanced. challenges. In the case of the challenge video, the shadow to left of the left line, is mistakenly identified as the actuall line. More experimentation, on the parameters for thresholding might solve this issue. On the harder challenge, the problem is that the line excibits curve on both ends of each line, at opposite directions. Therefore, the algorithm fails sometimes to fit a polinomical. This can be fixed if someone was to used an average fit value instead of the actual fit value.
+The algorithm performed as expected on the project_video, but the results were not so good on the advanced challenges. In the case of the challenge video, the shadow to left of the left line, is mistakenly identified as the actuall line. More experimentation, on the parameters for thresholding might solve this issue. On the harder challenge, the problem is that the line excibits curve on both ends, at opposite directions. Therefore, the algorithm, sometimes fail to fit a polinomial. This can be fixed if someone was to used an average fit value instead of the actual fit value.
