@@ -19,9 +19,7 @@ The goals / steps of this project are the following:
 [image4]: ./output_images/lines_orig_udist.jpg "Source and Destination point verification"
 [image5]: ./output_images/warped_unwarped.jpg "Warp & Unwarped Images"
 [image6]: ./output_images/lanes_detection.jpg "Lane detections"
-[image7]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image8]: ./examples/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[video1]: ./output_video.mp4 "Video"
 
 ## Implementation
 
@@ -90,7 +88,7 @@ Using these two matrices, a warped and unwarped version of the thresholded image
 
 ## 3. Lane Detection
 
-Lane detection is implemented in section 3 of the IPython Notebook, using two distinct functions. When the algorithm is executed for the first time or the lane needs to be re-detected without taking into account any previous detections, `find_lane_pixels()` is used. This method takes a binary thresholded image as an input and returns the left and right lane pixel positions. The state of each line is stored using class `Line()`. Two instansiations of this class are needed, one for the left and one for the right lane. Once we detect the pixels for each line, `fit_polynomial()` is used to fit a polynomial. Here is the result of `find_lane_pixels()` and `fit_polynomial()`:
+Lane detection is implemented in section 3 of the IPython Notebook, using two distinct functions. When the algorithm is executed for the first time or the lane needs to be re-detected without taking into account any previous detections, `find_lane_pixels()` is used. This method takes a binary thresholded image as an input and returns the left and right lane pixel positions. The state of each line is stored using class `Line()`. The Line class is stored in `Line.py`. Two instansiations of this class are needed, one for the left and one for the right lane. Once we detect the pixels for each line, `fit_polynomial()` is used to fit a polynomial. Here is the result of `find_lane_pixels()` and `fit_polynomial()`:
 
 ![alt text][image6]
 
@@ -98,27 +96,15 @@ When the lane has already been detected, `search_around_poly()` is used to incre
 
 ### 3.1 Curvature calculation
 
+The implementation of curvature calculation  can be found in section 3.1 of the IPython Notebook, within the `measure_curvature_real()` method. The calculation for the vehicle offset is implemented within `vehicle_offset()`.
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center
+### 3.2 Detection pipeline
 
-I did this in lines # through # in my code in `my_other_file.py`
+The detection pipeline is implemented within `detect_lane()`. During the initial state `find_lane_pixels()` is used while `search_around_poly()` is used if the lines where already detected. Once the lane pixels are found `fit_polynomial()` is used to fit an appropriate polynomial. Then the curvature is measured and the offset from the center is calculated.
+Overlaying the result is done using two functions. `overlay_img()` which draws the offset and `label_img()` that adds the required labels for offset and average curvature. The resulting video can be seen here ![here][video1]:
 
-#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly
+[![LaneDetector](https://i.ytimg.com/vi/hK7WGtM3uw0/3.jpg)](https://www.youtube.com/embed/hK7WGtM3uw0)
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+## 4. Discussion
 
----
-
-### Pipeline (video)
-
-#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!)
-
-Here's a [link to my video result](./project_video.mp4)
-
----
-
-### Discussion
-
-#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust
-
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+The algorithm performed as expected on the project_video, but the results were not so good on the advanced. challenges. In the case of the challenge video, the shadow to left of the left line, is mistakenly identified as the actuall line. More experimentation, on the parameters for thresholding might solve this issue. On the harder challenge, the problem is that the line excibits curve on both ends of each line, at opposite directions. Therefore, the algorithm fails sometimes to fit a polinomical. This can be fixed if someone was to used an average fit value instead of the actual fit value.
