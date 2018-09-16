@@ -1,19 +1,4 @@
-## Advanced Lane Finding
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
-
-
-In this project, your goal is to write a software pipeline to identify the lane boundaries in a video, but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
-
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
-
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
-
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
-
-The Project
----
+# **Advanced Lane Finding Project Report**
 
 The goals / steps of this project are the following:
 
@@ -26,14 +11,114 @@ The goals / steps of this project are the following:
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-The images for camera calibration are stored in the folder called `camera_cal`.  The images in `test_images` are for testing your pipeline on single frames.  If you want to extract more test images from the videos, you can simply use an image writing method like `cv2.imwrite()`, i.e., you can read the video in frame by frame as usual, and for frames you want to save for later you can write to an image file.  
+[//]: # (Image References)
 
-To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `output_images`, and include a description in your writeup for the project of what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+[image1]: ./output_images/original_undistored.jpg "Original and Undistorted Images"
+[image2]: ./output_images/original_undistored_thresholded.jpg "Undistored Thresholded Image"
+[image3]: ./output_images/undistored_perpsective_points.jpg "Source & Destination points for perspective tranform"
+[image4]: ./output_images/lines_orig_udist.jpg "Source and Destination point verification"
+[image5]: ./output_images/warped_unwarped.jpg "Warp & Unwarped Images"
+[image6]: ./output_images/lanes_detection.jpg "Lane detections"
+[image7]: ./examples/color_fit_lines.jpg "Fit Visual"
+[image8]: ./examples/example_output.jpg "Output"
+[video1]: ./project_video.mp4 "Video"
 
-The `challenge_video.mp4` video is an extra (and optional) challenge for you if you want to test your pipeline under somewhat trickier conditions.  The `harder_challenge.mp4` video is another optional challenge and is brutal!
+## Implementation
 
-If you're feeling ambitious (again, totally optional though), don't stop there!  We encourage you to go out and take video of your own, calibrate your camera and show us how you would implement this project from scratch!
+This project was implemented using the `lane_finding.ipynb` jupyter notebook . The resulting images can be found under the test images folder. The resulting videos can be found under the root folder.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+## 1. Camera Calibration
 
+The code for this step is contained in the first section of the IPython notebook `lane_finding.ipynb`. The images used for calibration were loaded from the camera_cal folder using the glob library. By visual observation, the number of corners was found to be 9,6 for each the calibration images. An array of 3D object points was prepared `objpoints`, using `numpy.mgrid()`, for the x,y coordinates and assuming that z=0 i.e. the chessboard is fixed on the (x,y) plane. The (x, y, z) points will represent the coordinates of the chessboard corners in the world. Using OpenCV's `findChessboardCorners()` for each one of the calibration images, the actual image points where detected. In order to confirm the validity of our detected points, `cv2.drawChessboardCorners()` was used to display them.
+In order to calculate the camera calibration and distortion coefficients, the function `cv2.calibrateCamera()` was used. Subsequently, distorsion correction was perfomed using the function `cv2.undistort()`, to undistort all the images in the test_images folder. The resulting images can be found under the output_images folder.  Here is a comparison of the result for one of the test images.
+
+![alt text][image1]
+
+The camera calibration and distortion coefficients were stored in a pickle file, `camera_matrix.p`.
+
+## 2. Image Thresholding
+
+The various thresholding method are implemented in the section 2 of the IPython notebook. Several different algorithms for image thresholding where explored and various parameters were tested to improve the final result.
+
+* Gradient thresholding in `abs_sobel_thresh()`
+* Magnitude of gradients in `mag_thresh()`
+* Direction of gradients in `dir_threshold()`
+* HLS thresholding in `hls_select()`
+* Combined in `combined_threshold()`
+
+The combined methond included all gradient thresholding in the x direction along with the other four methods. The result of applying this method in an undistorted image can be seen in the figure below:
+
+![alt text][image2]
+
+## 2.1 Perspective transform
+
+The implementation for the perspective transform can be found within the function `perspective_transform()`, in section 2.1 of the IPython Notebook. The function uses a set of source and destination points, for the given input image and `cv2.getPerspectiveTransform()` to calculate the transformation matrix. The inverse transformation matrix was obtained using `cv2.getPerspectiveTransform()`. The source and destination points were selected using the following formula:
+
+```python
+src = np.float32(
+    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
+    [((img_size[0] / 6) - 10), img_size[1]],
+    [(img_size[0] * 5 / 6) + 60, img_size[1]],
+    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
+dst = np.float32(
+    [[(img_size[0] / 4), 0],
+    [(img_size[0] / 4), img_size[1]],
+    [(img_size[0] * 3 / 4), img_size[1]],
+    [(img_size[0] * 3 / 4), 0]])
+```
+
+This resulted in the following source and destination points:
+
+| Source        | Destination   |
+|:-------------:|:-------------:|
+| 585, 460      | 320, 0        |
+| 203, 720      | 320, 720      |
+| 1127, 720     | 960, 720      |
+| 695, 460      | 960, 0        |
+
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image:
+
+![alt text][image3]
+
+Then i drew a line on the original, then undistorted and a warped image to verify that the lines appear parallel:
+
+![alt text][image4]
+
+Using these two matrices, a warped and unwarped version of the thresholded images was obtained using `cv2.warpPerspective()` and `cv2.warpPerspective()` respectively:
+
+![alt text][image5]
+
+## 3. Lane Detection
+
+Lane detection is implemented in section 3 of the IPython Notebook, using two distinct functions. When the algorithm is executed for the first time or the lane needs to be re-detected without taking into account any previous detections, `find_lane_pixels()` is used. This method takes a binary thresholded image as an input and returns the left and right lane pixel positions. The state of each line is stored using class `Line()`. Two instansiations of this class are needed, one for the left and one for the right lane. Once we detect the pixels for each line, `fit_polynomial()` is used to fit a polynomial. Here is the result of `find_lane_pixels()` and `fit_polynomial()`:
+
+![alt text][image6]
+
+When the lane has already been detected, `search_around_poly()` is used to increase efficiency.
+
+### 3.1 Curvature calculation
+
+
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center
+
+I did this in lines # through # in my code in `my_other_file.py`
+
+#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly
+
+I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+
+---
+
+### Pipeline (video)
+
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!)
+
+Here's a [link to my video result](./project_video.mp4)
+
+---
+
+### Discussion
+
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust
+
+Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
